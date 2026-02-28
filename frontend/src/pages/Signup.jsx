@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, Briefcase, Mail, Lock, User, Building, AlertCircle, CheckCircle } from 'lucide-react';
 import Toast from '../components/Toast';
+import { authAPI } from '../services/api';
 
 const Signup = ({ onSignupSuccess }) => {
   const navigate = useNavigate();

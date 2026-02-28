@@ -703,6 +703,12 @@ def update_profile():
         current_user_id = get_jwt_identity()
         data = request.get_json()
         
+        app.logger.info(f"Profile update request for user {current_user_id}")
+        app.logger.debug(f"Profile data keys: {list(data.keys()) if data else 'None'}")
+        
+        if not data:
+            raise APIError("No data provided", 400)
+        
         user = User.query.get(current_user_id)
         if not user:
             raise APIError("User not found", 404)

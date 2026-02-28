@@ -239,7 +239,15 @@ const Profile = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to save profile: ${response.status} ${response.statusText}`);
+        let errorMsg = `Failed to save profile: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          console.error('Backend error response:', errorData);
+          errorMsg += ` - ${errorData.error || errorData.message || response.statusText}`;
+        } catch (e) {
+          errorMsg += ` - ${response.statusText}`;
+        }
+        throw new Error(errorMsg);
       }
 
       // Also save to localStorage as backup

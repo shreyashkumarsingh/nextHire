@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p uploads/resumes logs instance
+RUN mkdir -p uploads/resumes instance
 
 # Set environment variables
 ENV FLASK_ENV=production

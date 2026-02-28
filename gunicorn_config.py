@@ -9,15 +9,18 @@ bind = "0.0.0.0:5000"
 backlog = 2048
 
 # Worker processes
-workers = multiprocessing.cpu_count() * 2 + 1
+# For Render free tier with limited memory, use minimal workers
+# WEB_CONCURRENCY env var overrides this if set
+workers = int(os.getenv('WEB_CONCURRENCY', 2))
 worker_class = "sync"
-worker_connections = 1000
+worker_connections = 100
 timeout = 30
 keepalive = 2
 
 # Logging
-accesslog = "logs/gunicorn_access.log"
-errorlog = "logs/gunicorn_error.log"
+# Use stdout/stderr for Render (container platforms prefer this)
+accesslog = "-"
+errorlog = "-"
 loglevel = "info"
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -91,29 +91,24 @@ with app.app_context():
 
 
 # ============================================================================
-# LEGACY ROUTES (for backwards compatibility with old templates)
+# FRONTEND ROUTES (Serve React App)
 # ============================================================================
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    """Legacy route for old template-based interface"""
-    if request.method == "POST":
-        resume_file = request.files.get("resume")
-        if not resume_file:
-            return render_template("index.html", error="Please upload a resume file.")
+@app.route("/", methods=["GET"])
+def serve_index():
+    """Serve React app index.html"""
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'static'), 'index.html')
 
-        raw_text = parse_resume(resume_file)
-        cleaned = clean_text(raw_text)
-        extracted = extract_skills(cleaned)
-        matched = match_skills(extracted)
 
-        return render_template(
-            "results.html",
-            extracted_skills=extracted,
-            matched_skills=matched,
-        )
-
-    return render_template("index.html")
+@app.errorhandler(404)
+def catch_all(e):
+    """Catch all routes and serve React app for SPA routing"""
+    # Don't catch /api routes
+    if request.path.startswith('/api/'):
+        return jsonify({"error": "API endpoint not found"}), 404
+    
+    # Serve React app
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'static'), 'index.html')
 
 
 # ============================================================================

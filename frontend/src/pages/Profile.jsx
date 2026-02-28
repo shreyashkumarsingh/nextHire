@@ -242,9 +242,10 @@ const Profile = () => {
         let errorMsg = `Failed to save profile: ${response.status}`;
         try {
           const errorData = await response.json();
-          console.error('Backend error response:', errorData);
-          errorMsg += ` - ${errorData.error || errorData.message || response.statusText}`;
+          console.error('Backend error response:', JSON.stringify(errorData, null, 2));
+          errorMsg += ` - ${errorData.error || errorData.message || JSON.stringify(errorData) || response.statusText}`;
         } catch (e) {
+          console.error('Could not parse error response:', e);
           errorMsg += ` - ${response.statusText}`;
         }
         throw new Error(errorMsg);

@@ -705,6 +705,7 @@ def update_profile():
         
         app.logger.info(f"Profile update request for user {current_user_id}")
         app.logger.debug(f"Profile data keys: {list(data.keys()) if data else 'None'}")
+        app.logger.debug(f"Full profile data: {data}")
         
         if not data:
             raise APIError("No data provided", 400)
@@ -724,6 +725,12 @@ def update_profile():
             user.full_name = data['fullName']
         if 'company' in data:
             user.company = data['company']
+        if 'email' in data and data['email'] != user.email:
+            # Check if email is already taken by another user
+            existing_user = User.query.filter_by(email=data['email']).first()
+            if existing_user and existing_user.id != current_user_id:
+                raise APIError("Email already in use by another account", 400)
+            user.email = data['email']
         
         # Update profile fields (same logic as before)
         field_mapping = {
@@ -758,7 +765,10 @@ def update_profile():
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Profile UPDATE error: {str(e)}")
-        raise APIError(str(e), 500)
+        app.logger.error(f"Exception type: {type(e).__name__}")
+        import traceback
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        raise APIError(f"Profile update failed: {str(e)}", 500)
 
 
 @app.route("/api/profile/two-factor", methods=["POST"])

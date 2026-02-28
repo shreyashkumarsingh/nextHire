@@ -100,14 +100,24 @@ def serve_index():
     return send_from_directory(os.path.join(os.path.dirname(__file__), 'static'), 'index.html')
 
 
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    """Serve static assets (CSS, JS, images)"""
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'static', 'assets'), filename)
+
+
 @app.errorhandler(404)
 def catch_all(e):
     """Catch all routes and serve React app for SPA routing"""
-    # Don't catch /api routes
-    if request.path.startswith('/api/'):
-        return jsonify({"error": "API endpoint not found"}), 404
+    # Don't catch /api routes or static asset routes
+    if request.path.startswith('/api/') or request.path.startswith('/assets/'):
+        return jsonify({"error": "Not found"}), 404
     
-    # Serve React app
+    # Check if the path has a file extension (likely a static file)
+    if '.' in request.path.split('/')[-1]:
+        return jsonify({"error": "File not found"}), 404
+    
+    # Serve React app for client-side routing
     return send_from_directory(os.path.join(os.path.dirname(__file__), 'static'), 'index.html')
 
 

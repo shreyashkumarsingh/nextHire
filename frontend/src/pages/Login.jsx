@@ -175,7 +175,9 @@ const Login = ({ onLoginSuccess }) => {
                   borderRadius: '12px',
                   outline: 'none',
                   transition: 'all 0.3s ease',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  color: '#111827',
+                  backgroundColor: '#ffffff'
                 }}
                 onFocus={(e) => e.target.style.borderColor = '#667eea'}
                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}

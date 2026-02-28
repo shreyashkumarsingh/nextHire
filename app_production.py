@@ -50,6 +50,16 @@ db.init_app(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
+# Helper function to convert JWT identity string to integer
+def get_current_user_id():
+    """Get user ID as integer from JWT identity"""
+    identity = get_jwt_identity()
+    try:
+        return int(identity) if identity else None
+    except (ValueError, TypeError):
+        return None
+
+
 # Setup logging
 setup_logging(app)
 
@@ -164,7 +174,7 @@ def signup():
         log_authentication(app, data['username'], 'signup', 'success')
         
         # Create access token
-        access_token = create_access_token(identity=new_user.id)
+        access_token = create_access_token(identity=str(new_user.id))
         
         return jsonify({
             "message": "User created successfully",
@@ -207,7 +217,7 @@ def login():
         log_authentication(app, identifier, 'login', 'success')
         
         # Create access token
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
         
         return jsonify({
             "message": "Login successful",
@@ -227,7 +237,7 @@ def login():
 def get_current_user():
     """Get current authenticated user"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         user = User.query.get(current_user_id)
         
         if not user:
@@ -252,7 +262,7 @@ def change_password():
         if not is_valid:
             raise APIError(error_msg, 400)
 
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         user = User.query.get(current_user_id)
         if not user:
             raise APIError("User not found", 404)
@@ -286,7 +296,7 @@ def api_upload_resume():
     try:
         # Try to get current user if authenticated
         try:
-            current_user_id = get_jwt_identity()
+            current_user_id = get_current_user_id()
             is_authenticated = True
         except:
             # Demo mode - use demo user (ID 0)
@@ -467,7 +477,7 @@ def api_get_resumes():
     try:
         # Try to get current user if authenticated
         try:
-            current_user_id = get_jwt_identity()
+            current_user_id = get_current_user_id()
             is_authenticated = True
         except:
             # Not authenticated - return demo data
@@ -527,7 +537,7 @@ def api_get_resumes():
 def api_get_resume(resume_id):
     """Get specific resume by ID"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         resume = Resume.query.filter_by(id=resume_id, user_id=current_user_id).first()
         
         if not resume:
@@ -547,7 +557,7 @@ def api_get_resume(resume_id):
 def api_delete_resume(resume_id):
     """Delete resume by ID"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         resume = Resume.query.filter_by(id=resume_id, user_id=current_user_id).first()
         
         if not resume:
@@ -584,7 +594,7 @@ def api_delete_resume(resume_id):
 def api_get_analytics():
     """Get analytics data"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         resumes = Resume.query.filter_by(user_id=current_user_id, status='active').all()
         
         if not resumes:
@@ -632,7 +642,7 @@ def get_profile():
     try:
         # Try to get JWT identity, fallback to first user for testing
         try:
-            current_user_id = get_jwt_identity()
+            current_user_id = get_current_user_id()
         except:
             user = User.query.first()
             if not user:
@@ -700,7 +710,7 @@ def get_profile():
 def update_profile():
     """Update user profile"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         data = request.get_json()
         
         app.logger.info(f"Profile update request for user {current_user_id}")
@@ -779,7 +789,7 @@ def update_two_factor():
         data = request.get_json() or {}
         enabled = bool(data.get('enabled', False))
 
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         user = User.query.get(current_user_id)
         if not user:
             raise APIError("User not found", 404)

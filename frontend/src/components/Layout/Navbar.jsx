@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Moon, Sun } from 'lucide-react';
 
 const PROFILE_STORAGE_KEY = 'userProfile';
+const PROFILE_UPDATED_EVENT = 'profileUpdated';
 
 const Navbar = ({ darkMode, toggleDarkMode }) => {
   const navigate = useNavigate();
@@ -33,7 +34,11 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
 
     loadProfile();
     window.addEventListener('storage', loadProfile);
-    return () => window.removeEventListener('storage', loadProfile);
+    window.addEventListener(PROFILE_UPDATED_EVENT, loadProfile);
+    return () => {
+      window.removeEventListener('storage', loadProfile);
+      window.removeEventListener(PROFILE_UPDATED_EVENT, loadProfile);
+    };
   }, []);
   return (
     <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 fixed top-0 right-0 left-64 z-10">

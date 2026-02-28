@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 const PROFILE_STORAGE_KEY = 'userProfile';
+const PROFILE_UPDATED_EVENT = 'profileUpdated';
 
 const defaultProfile = {
   fullName: '',
@@ -225,6 +226,7 @@ const Profile = () => {
       if (!token) {
         // Fallback to localStorage if not authenticated
         localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+        window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
         setTimeout(() => setSaving(false), 400);
         return;
       }
@@ -253,6 +255,7 @@ const Profile = () => {
 
       // Also save to localStorage as backup
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
       
       setTimeout(() => setSaving(false), 400);
     } catch (err) {
@@ -260,6 +263,7 @@ const Profile = () => {
       setError(`Failed to save profile: ${err.message}`);
       // Still save to localStorage as fallback
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
       setTimeout(() => setSaving(false), 400);
     }
   };

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Screening Results</h1>
+      <section>
+        <h2>Extracted Skills</h2>
+        {% if extracted_skills %}
+        <ul>
+          {% for skill in extracted_skills %}
+          <li>{{ skill }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p>No skills detected.</p>
+        {% endif %}
+      </section>
+      <section>
+        <h2>Matched Skills</h2>
+        {% if matched_skills %}
+        <ul>
+          {% for skill in matched_skills %}
+          <li>{{ skill }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p>No matches found.</p>
+        {% endif %}
+      </section>
+      <a class="link" href="{{ url_for('index') }}">Analyze another resume</a>
+    </main>
+  </body>
+</html>

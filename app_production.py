@@ -431,6 +431,7 @@ def api_upload_resume():
                 'matchPercentage': match_data["match_percentage"],
                 'uploadDate': datetime.now().strftime('%Y-%m-%d'),
                 'status': 'active',
+                'rawText': raw_text,
                 'skills': [{'name': skill, 'isMatched': skill in match_data.get("matched_skills", [])} for skill in extracted_skills],
                 'education': [{
                     'degree': edu.get('degree', ''),
@@ -465,6 +466,7 @@ def api_upload_resume():
             'skills': extracted_skills,
             'education': extracted_education,
             'experience': extracted_experience,
+            'rawText': raw_text,
             'uploadDate': datetime.now().strftime('%Y-%m-%d'),
             'demo': not is_authenticated,
             'message': 'Sign in to save this resume permanently' if not is_authenticated else 'Resume saved successfully'

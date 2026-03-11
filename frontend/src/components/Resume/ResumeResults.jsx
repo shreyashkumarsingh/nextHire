@@ -1,5 +1,61 @@
 import { User, Mail, Phone, Briefcase, GraduationCap, Award, TrendingUp } from 'lucide-react';
 
+const extractSectionText = (rawText, sectionName) => {
+  if (!rawText) {
+    return '';
+  }
+
+  const lines = rawText.split(/\r?\n/).map((line) => line.trim());
+  const sectionTitles = new Set([
+    'objective',
+    'summary',
+    'professional summary',
+    'experience',
+    'work experience',
+    'employment',
+    'skills',
+    'technical skills',
+    'projects',
+    'certifications',
+    'certification',
+    'achievements',
+    'publications',
+    'interests',
+    'languages',
+    'education',
+    'academic background',
+    'academic details',
+    'education details',
+    'educational qualification',
+    'qualifications'
+  ]);
+
+  const normalize = (line) => line.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+  const startIndex = lines.findIndex((line) => normalize(line) === sectionName);
+
+  if (startIndex === -1) {
+    return '';
+  }
+
+  const sectionLines = [];
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    const normalized = normalize(line);
+
+    if (!line) {
+      continue;
+    }
+
+    if (sectionTitles.has(normalized)) {
+      break;
+    }
+
+    sectionLines.push(line);
+  }
+
+  return sectionLines.join('\n');
+};
+
 const ResumeResults = ({ data }) => {
   // Require actual data from API - no mock/dummy data in production
   const resumeData = {
@@ -8,6 +64,7 @@ const ResumeResults = ({ data }) => {
     matchedSkills: data?.matchedSkills ?? data?.matched_skills,
     missingSkills: data?.missingSkills ?? data?.missing_skills,
   };
+  const educationSectionText = extractSectionText(resumeData.rawText, 'education');
 
   // Show empty state if no data provided
   if (!resumeData) {
@@ -301,13 +358,11 @@ const ResumeResults = ({ data }) => {
             <h3 className="font-semibold text-gray-900 dark:text-white">Education</h3>
           </div>
           <div className="space-y-4">
-            {resumeData.education.map((edu, index) => (
-              <div key={index} className="border-l-2 border-indigo-500 pl-4">
-                <p className="text-sm text-gray-900 dark:text-white whitespace-pre-line">
-                  {edu.text || [edu.degree, edu.institution, edu.year].filter(Boolean).join('\n')}
-                </p>
-              </div>
-            ))}
+            <div className="border-l-2 border-indigo-500 pl-4">
+              <p className="text-sm text-gray-900 dark:text-white whitespace-pre-line">
+                {educationSectionText || resumeData.education.map((edu) => edu.text || [edu.degree, edu.institution, edu.year].filter(Boolean).join('\n')).filter(Boolean).join('\n\n')}
+              </p>
+            </div>
           </div>
         </div>
       </div>

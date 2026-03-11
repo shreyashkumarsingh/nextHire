@@ -84,7 +84,7 @@ const ResumeResults = ({ data }) => {
             <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">Match</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Skill Match</h3>
           </div>
           <div className="flex items-center justify-center">
             <div className="relative w-32 h-32">
@@ -106,17 +106,24 @@ const ResumeResults = ({ data }) => {
                   strokeWidth="8"
                   fill="transparent"
                   strokeDasharray={`${2 * Math.PI * 56}`}
-                  strokeDashoffset={`${2 * Math.PI * 56 * (1 - resumeData.matchPercentage / 100)}`}
+                  strokeDashoffset={`${2 * Math.PI * 56 * (1 - (resumeData.matchPercentage ?? 0) / 100)}`}
                   className="text-primary-600 dark:text-primary-400 transition-all duration-1000"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {resumeData.matchPercentage}%
+                  {resumeData.matchPercentage != null ? `${resumeData.matchPercentage}%` : 'N/A'}
                 </span>
               </div>
             </div>
           </div>
+          {resumeData.matchPercentage != null && (
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
+              {resumeData.matchPercentage >= 70 ? 'Strong skill match' :
+               resumeData.matchPercentage >= 40 ? 'Partial skill match' :
+               'Low skill match — review missing skills below'}
+            </p>
+          )}
         </div>
       </div>
 

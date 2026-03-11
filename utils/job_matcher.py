@@ -25,7 +25,7 @@ def calculate_match_score(resume_text, job_description, job_title=''):
     """
     
     if not job_description or not resume_text:
-        return {"score": 0, "match_percentage": 0, "matched_skills": [], "missing_skills": []}
+        return {"score": 0, "match_percentage": 0, "matched_skills": [], "missing_skills": [], "breakdown": {"skills": 0, "education": 0, "experience": 0, "keywords": 0}}
     
     # Convert to lowercase
     resume_lower = resume_text.lower()
@@ -51,8 +51,8 @@ def calculate_match_score(resume_text, job_description, job_title=''):
         (keyword_score * 0.10)
     )
     
-    # Calculate overall match percentage
-    match_percentage = ats_score
+    # Calculate overall match percentage (pure skill-based, distinct from weighted ATS score)
+    match_percentage = skills_score
     
     # Ensure scores are within 0-100 range
     ats_score = max(0, min(100, ats_score))

@@ -465,6 +465,7 @@ def api_upload_resume():
             "matchPercentage": match_data["match_percentage"],
             "matchedSkills": match_data["matched_skills"],
             "missingSkills": match_data["missing_skills"],
+            "breakdown": match_data.get("breakdown"),
             "jobTitle": job_title,
             "uploadDate": datetime.now().strftime("%Y-%m-%d"),
             "rawText": raw_text

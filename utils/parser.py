@@ -92,106 +92,204 @@ def extract_name(text):
 
 
 def extract_education(text):
-    """Extract education information from resume text"""
-    education_list = []
-    lines = text.split('\n')
-    
-    # More comprehensive degree patterns
-    degree_keywords = ['bachelor', 'master', 'phd', 'degree', 'diploma', 'b.s.', 'b.tech', 'm.tech',
-                       'b.sc', 'm.sc', 'b.a', 'm.a', 'bca', 'mca', 'engineering', 'b.e', 'm.e',
-                       'b.com', 'm.com']
-    
-    # University keywords - excluding generic words that might match degree names
-    university_keywords = ['university', 'college', 'institute', 'school', 'iit', 'delhi', 'mumbai',
-                          'bangalore', 'hyderabad', 'pune', 'trinity', 'oxford', 'cambridge', 'stanford',
-                          'harvard', 'mit', 'nit', 'national institute', 'central', 'kiit']
-    
+    """Extract education information from resume text."""
+    lines = [line.strip() for line in text.splitlines()]
+
+    section_titles = {
+        'education',
+        'academic background',
+        'academic details',
+        'education details',
+        'educational qualification',
+        'qualifications'
+    }
+    stop_sections = {
+        'objective',
+        'summary',
+        'professional summary',
+        'experience',
+        'work experience',
+        'employment',
+        'skills',
+        'technical skills',
+        'projects',
+        'certifications',
+        'certification',
+        'achievements',
+        'publications',
+        'interests',
+        'languages'
+    }
+    institution_keywords = [
+        'university', 'college', 'institute', 'school', 'academy', 'polytechnic',
+        'deemed to be university', 'campus'
+    ]
+    generic_degree_terms = [
+        'bachelor', 'master', 'phd', 'doctorate', 'diploma', 'degree', 'b.tech',
+        'm.tech', 'b.e', 'm.e', 'b.sc', 'm.sc', 'bca', 'mca', 'mba', 'intermediate',
+        'high school', 'secondary', 'senior secondary', 'class x', 'class xii'
+    ]
+
+    def is_heading(line):
+        normalized = re.sub(r'[^a-z\s]', '', line.lower()).strip()
+        if normalized in section_titles or normalized in stop_sections:
+            return True
+        if len(normalized.split()) <= 4 and normalized.isupper():
+            return True
+        return False
+
+    def is_stop_heading(line):
+        normalized = re.sub(r'[^a-z\s]', '', line.lower()).strip()
+        return normalized in stop_sections
+
+    def is_score_line(line):
+        lower_line = line.lower()
+        return any(token in lower_line for token in ['cgpa', 'gpa', 'percentage', '%', 'grade'])
+
+    def is_year_line(line):
+        return bool(re.search(r'\b(?:19|20)\d{2}\b', line))
+
+    def extract_year(block_lines):
+        for entry_line in block_lines:
+            match = re.search(r'((?:19|20)\d{2}\s*[-–]\s*(?:present|current|(?:19|20)\d{2}))', entry_line, re.IGNORECASE)
+            if match:
+                return match.group(1)
+        for entry_line in block_lines:
+            match = re.search(r'\b(?:19|20)\d{2}\b', entry_line)
+            if match:
+                return match.group(0)
+        return 'N/A'
+
+    def is_institution_line(line):
+        lower_line = line.lower()
+        return any(keyword in lower_line for keyword in institution_keywords)
+
+    def looks_like_degree_line(line):
+        lower_line = line.lower()
+        return any(term in lower_line for term in generic_degree_terms)
+
+    def clean_degree_text(line):
+        stripped = re.sub(r'\s+', ' ', line).strip(' -|:')
+        match = re.search(
+            r'(?:bachelor|master|diploma|degree|b\.tech|m\.tech|b\.e|m\.e|b\.sc|m\.sc|bca|mca|mba)\s+(?:of|in)\s+(.+)',
+            stripped,
+            re.IGNORECASE,
+        )
+        if match:
+            return match.group(1).strip()
+        return stripped
+
+    def pick_degree_name(degree_lines):
+        if not degree_lines:
+            return 'Education information not found'
+        cleaned_lines = [clean_degree_text(line) for line in degree_lines if line]
+        if len(cleaned_lines) >= 2 and looks_like_degree_line(degree_lines[0]) and not is_institution_line(cleaned_lines[1]):
+            second_line = cleaned_lines[1]
+            if len(second_line.split()) >= 2:
+                return second_line
+        for cleaned in cleaned_lines:
+            if not looks_like_degree_line(cleaned) and not is_institution_line(cleaned):
+                return cleaned
+        return cleaned_lines[0]
+
+    def parse_entry(block_lines):
+        filtered_lines = []
+        for entry_line in block_lines:
+            if not entry_line or is_score_line(entry_line):
+                continue
+            filtered_lines.append(entry_line)
+
+        if not filtered_lines:
+            return None
+
+        institution = 'N/A'
+        institution_index = None
+        for index, entry_line in enumerate(filtered_lines):
+            if is_institution_line(entry_line):
+                institution = entry_line
+                institution_index = index
+                break
+
+        degree_candidates = []
+        search_lines = filtered_lines if institution_index is None else filtered_lines[:institution_index]
+        for entry_line in search_lines:
+            if is_year_line(entry_line):
+                continue
+            degree_candidates.append(entry_line)
+
+        if not degree_candidates and institution_index is not None and institution_index > 0:
+            previous_line = filtered_lines[institution_index - 1]
+            if not is_year_line(previous_line):
+                degree_candidates = [previous_line]
+
+        if institution == 'N/A' and institution_index is None:
+            for entry_line in filtered_lines[1:]:
+                if not is_year_line(entry_line):
+                    institution = entry_line
+                    break
+
+        degree_name = pick_degree_name(degree_candidates)
+        year = extract_year(filtered_lines)
+
+        if degree_name == 'Education information not found' and institution == 'N/A':
+            return None
+
+        return {
+            'degree': degree_name,
+            'institution': institution,
+            'year': year
+        }
+
+    education_start = None
+    for index, line in enumerate(lines):
+        normalized = re.sub(r'[^a-z\s]', '', line.lower()).strip()
+        if normalized in section_titles:
+            education_start = index + 1
+            break
+
+    section_lines = []
+    if education_start is not None:
+        for line in lines[education_start:]:
+            if is_stop_heading(line):
+                break
+            section_lines.append(line)
+    else:
+        section_lines = lines
+
     found_education = []
-    
-    # Look for lines that contain degree keywords
-    for idx, line in enumerate(lines):
-        line_lower = line.lower().strip()
-        if not line_lower or len(line_lower) < 3:
+    current_block = []
+
+    for line in section_lines:
+        if not line:
+            if current_block:
+                parsed = parse_entry(current_block)
+                if parsed and parsed not in found_education:
+                    found_education.append(parsed)
+                current_block = []
             continue
-        
-        # Check if line contains any degree keyword
-        has_degree_keyword = any(deg in line_lower for deg in degree_keywords)
-        
-        if has_degree_keyword:
-            # Extract year if present anywhere in the education block (current or nearby lines)
-            year = 'N/A'
-            # Check current line for year
-            year_match = re.search(r'\b(19|20)\d{2}\b', line)
-            if year_match:
-                year = year_match.group(0)
-            # Check next few lines for year if not found yet
-            if year == 'N/A':
-                for check_idx in range(idx + 1, min(idx + 4, len(lines))):
-                    year_match = re.search(r'\b(19|20)\d{2}\b', lines[check_idx])
-                    if year_match:
-                        year = year_match.group(0)
-                        break
-            
-            # Look for institution name in nearby lines
-            institution = 'N/A'
-            
-            # First, check if current line itself contains institution keywords
-            has_university_current = any(univ in line_lower for univ in university_keywords)
-            
-            if has_university_current:
-                # Current line has institution info (like "B.Tech from University Name")
-                institution = line.strip()
-            else:
-                # Look in nearby lines (next 3 lines) for institution
-                for check_idx in range(idx + 1, min(idx + 4, len(lines))):
-                    check_line = lines[check_idx].lower().strip()
-                    
-                    # Skip empty lines
-                    if not check_line or len(check_line) < 3:
-                        continue
-                    
-                    # Skip if this is another degree line
-                    if any(deg in check_line for deg in degree_keywords):
-                        continue
-                    
-                    # Check if this line has university keywords
-                    has_university = any(univ in check_line for univ in university_keywords)
-                    
-                    if has_university:
-                        institution = lines[check_idx].strip()
-                        break
-                    elif institution == 'N/A' and check_idx == idx + 1:
-                        # If next line doesn't have degree or year, assume it's institution
-                        has_year = re.search(r'\b(19|20)\d{2}\b', lines[check_idx])
-                        if not has_year and len(lines[check_idx].strip()) > 3:
-                            institution = lines[check_idx].strip()
-                            break
-            
-            # Extract degree type
-            degree_type = 'Degree'
-            if any(m in line_lower for m in ['master', 'm.', 'm_']):
-                degree_type = 'Master'
-            elif any(b in line_lower for b in ['bachelor', 'b.', 'b_']):
-                degree_type = 'Bachelor'
-            elif 'phd' in line_lower:
-                degree_type = 'PhD'
-            elif 'diploma' in line_lower:
-                degree_type = 'Diploma'
-            
-            edu_item = {
-                "degree": degree_type,
-                "institution": institution,
-                "year": year
-            }
-            
-            # Avoid duplicates
-            if edu_item not in found_education:
-                found_education.append(edu_item)
-    
+
+        if is_heading(line):
+            if current_block:
+                parsed = parse_entry(current_block)
+                if parsed and parsed not in found_education:
+                    found_education.append(parsed)
+                current_block = []
+            continue
+
+        current_block.append(line)
+
+        if len(current_block) >= 3 and is_institution_line(line):
+            continue
+
+    if current_block:
+        parsed = parse_entry(current_block)
+        if parsed and parsed not in found_education:
+            found_education.append(parsed)
+
     return found_education if found_education else [{
-        "degree": "Education information not found",
-        "institution": "N/A",
-        "year": "N/A"
+        'degree': 'Education information not found',
+        'institution': 'N/A',
+        'year': 'N/A'
     }]
 
 

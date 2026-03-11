@@ -300,7 +300,6 @@ const ResumeResults = ({ data }) => {
               <div key={index} className="border-l-2 border-indigo-500 pl-4">
                 <h4 className="font-semibold text-gray-900 dark:text-white">{edu.degree}</h4>
                 <p className="text-sm text-indigo-600 dark:text-indigo-400">{edu.institution}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{edu.year}</p>
               </div>
             ))}
           </div>

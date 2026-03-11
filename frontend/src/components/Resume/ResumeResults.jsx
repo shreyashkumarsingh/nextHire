@@ -2,7 +2,12 @@ import { User, Mail, Phone, Briefcase, GraduationCap, Award, TrendingUp } from '
 
 const ResumeResults = ({ data }) => {
   // Require actual data from API - no mock/dummy data in production
-  const resumeData = data;
+  const resumeData = {
+    ...data,
+    matchPercentage: data?.matchPercentage ?? data?.match_percentage,
+    matchedSkills: data?.matchedSkills ?? data?.matched_skills,
+    missingSkills: data?.missingSkills ?? data?.missing_skills,
+  };
 
   // Show empty state if no data provided
   if (!resumeData) {

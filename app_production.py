@@ -432,7 +432,13 @@ def api_upload_resume():
                 'uploadDate': datetime.now().strftime('%Y-%m-%d'),
                 'status': 'active',
                 'skills': [{'name': skill, 'isMatched': skill in match_data.get("matched_skills", [])} for skill in extracted_skills],
-                'education': [{'degree': edu.get('degree', ''), 'institution': edu.get('institution', ''), 'year': edu.get('year', ''), 'fieldOfStudy': edu.get('field', '')} for edu in extracted_education],
+                'education': [{
+                    'degree': edu.get('degree', ''),
+                    'institution': edu.get('institution', ''),
+                    'year': edu.get('year', ''),
+                    'fieldOfStudy': edu.get('field', ''),
+                    'text': edu.get('text', '')
+                } for edu in extracted_education],
                 'experience': [{'title': exp.get('title', ''), 'company': exp.get('company', ''), 'duration': exp.get('duration', '')} for exp in extracted_experience],
                 'matchedSkills': match_data.get("matched_skills", []),
                 'missingSkills': match_data.get("missing_skills", [])

@@ -10,6 +10,34 @@ const api = axios.create({
   },
 });
 
+const normalizeResume = (resume) => {
+  if (!resume || typeof resume !== 'object') {
+    return resume;
+  }
+
+  return {
+    ...resume,
+    matchPercentage: resume.matchPercentage ?? resume.match_percentage ?? resume.match,
+    matchedSkills: resume.matchedSkills ?? resume.matched_skills,
+    missingSkills: resume.missingSkills ?? resume.missing_skills,
+  };
+};
+
+const normalizeResumeCollection = (payload) => {
+  if (Array.isArray(payload)) {
+    return payload.map(normalizeResume);
+  }
+
+  if (payload && Array.isArray(payload.resumes)) {
+    return {
+      ...payload,
+      resumes: payload.resumes.map(normalizeResume),
+    };
+  }
+
+  return normalizeResume(payload);
+};
+
 // Add token to requests if available
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -60,19 +88,19 @@ export const resumeAPI = {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
+    return normalizeResume(response.data);
   },
 
   // Get all resumes
   getAllResumes: async () => {
     const response = await api.get('/resumes');
-    return response.data;
+    return normalizeResumeCollection(response.data);
   },
 
   // Get resume by ID
   getResumeById: async (id) => {
     const response = await api.get(`/resumes/${id}`);
-    return response.data;
+    return normalizeResume(response.data);
   },
 
   // Delete resume
